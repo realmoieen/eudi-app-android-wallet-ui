@@ -50,17 +50,17 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: ./gradlew bundleRelease --stacktrace
 
-      - name: Get release file aab path
-        id: releaseAab
-        run: |
-          find app/build/outputs/bundle/release/*.aab
-          echo "aabfile=$(find app/build/outputs/bundle/release/*.aab)" >> $GITHUB_OUTPUT
+      # - name: Get release file aab path
+      #   id: releaseAab
+      #   run: |
+      #     find ./app/build/outputs/bundle/release/*.aab
+      #     echo "aabfile=$(find ./app/build/outputs/bundle/release/*.aab)" >> $GITHUB_OUTPUT
 
       - name: Get release file apk path
         id: releaseApk
         run: |
-          find app/build/outputs/apk/release/*.apk
-          echo "apkfile=$(find app/build/outputs/apk/release/*.apk)" >> $GITHUB_OUTPUT
+          find ./app/build/outputs/apk/release/*.apk
+          echo "apkfile=$(find ./app/build/outputs/apk/release/*.apk)" >> $GITHUB_OUTPUT
 
       - name: Zip Files
         uses: papeloto/action-zip@v1
