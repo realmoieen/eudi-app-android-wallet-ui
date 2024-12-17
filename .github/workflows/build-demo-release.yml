@@ -53,11 +53,11 @@ jobs:
       - name: Get release file aab path
         id: releaseAab
         # run: echo "aabfile=$(find */eudi-app-android-wallet-ui)" >> $GITHUB_OUTPUT
-        run: find */eudi-app-android-wallet-ui
+        run: find . -name *.apk
 
       - name: Get release file apk path
         id: releaseApk
-        run: echo "apkfile=$(find */eudi-app-android-wallet-ui)" >> $GITHUB_OUTPUT
+        run: echo "apkfile=$(find . -name *.apk)" >> $GITHUB_OUTPUT
 
       - name: Zip Files
         uses: papeloto/action-zip@v1
