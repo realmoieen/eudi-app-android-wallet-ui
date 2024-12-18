@@ -59,14 +59,17 @@ jobs:
       - name: Get release file apk path
         id: releaseApk
         run: |
-          find ./app/build/outputs/apk/release/*.apk
-          echo "apkfile=$(find ./app/build/outputs/apk/release/*.apk)" >> $GITHUB_OUTPUT
+          find . -name *.apk
+          echo "apkfile=$(find . -name *.apk)" >> $GITHUB_OUTPUT
 
-      - name: Zip Files
-        uses: papeloto/action-zip@v1
+      - uses: montudor/action-zip@v1
         with:
-          files: ${{ steps.releaseAab.outputs.aabfile }} ${{ steps.releaseApk.outputs.apkfile }}
-          dest: releases.zip
+          args: zip -qq -r releases.zip .
+      # - name: Zip Files
+      #   uses: papeloto/action-zip@v1
+      #   with:
+      #     files: .
+      #     dest: releases.zip
           
       - name: Upload Release Build to Artifacts
         uses: actions/upload-artifact@v3
