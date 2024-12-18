@@ -61,10 +61,11 @@ jobs:
 #        run: |
 #          find . -name *.apk
 #        # echo "apkfile=$(find . -name *.apk)" >> $GITHUB_OUTPUT
-#
-#      - uses: montudor/action-zip@v1
-#        with:
-#          args: zip -qq -r releases.zip ./app/build/outputs/
+      
+      - name: Zip Files
+      - uses: montudor/action-zip@v1
+        with:
+         args: zip -qq -r apk-releases.zip ./app/build/outputs/apk/
       # - name: Zip Files
       #   uses: papeloto/action-zip@v1
       #   with:
@@ -74,5 +75,5 @@ jobs:
       - name: Upload Release Build to Artifacts
         uses: actions/upload-artifact@v3
         with:
-           name: apk-release
-           path: ./app/build/outputs/
+           name: apk-releases
+           path: apk-releases.zip
