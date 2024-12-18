@@ -19,6 +19,7 @@ package eu.europa.ec.corelogic.di
 import android.content.Context
 import eu.europa.ec.businesslogic.controller.log.LogController
 import eu.europa.ec.corelogic.config.WalletCoreConfig
+import eu.europa.ec.corelogic.config.ProvideKtorHttpClient
 import eu.europa.ec.corelogic.config.WalletCoreConfigImpl
 import eu.europa.ec.corelogic.controller.WalletCoreDocumentsController
 import eu.europa.ec.corelogic.controller.WalletCoreDocumentsControllerImpl
@@ -46,6 +47,10 @@ fun provideEudiWallet(
     walletCoreLogController: WalletCoreLogController
 ): EudiWallet = EudiWallet(context, walletCoreConfig.config) {
     withLogger(walletCoreLogController)
+    // Custom HttpClient
+    withKtorHttpClientFactory {
+        ProvideKtorHttpClient.client()
+    }
 }
 
 @Single
