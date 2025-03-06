@@ -17,6 +17,9 @@
 package eu.europa.ec.uilogic.component.utils
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 
 enum class TopSpacing {
@@ -33,7 +36,19 @@ fun screenPaddings(
     bottom = SPACING_LARGE.dp + (append?.calculateBottomPadding() ?: 0.dp)
 )
 
+internal fun stickyBottomPaddings(
+    contentScreenPaddings: PaddingValues,
+    layoutDirection: LayoutDirection
+): PaddingValues {
+    return PaddingValues(
+        start = contentScreenPaddings.calculateStartPadding(layoutDirection),
+        end = contentScreenPaddings.calculateEndPadding(layoutDirection),
+        top = contentScreenPaddings.calculateBottomPadding(),
+        bottom = contentScreenPaddings.calculateBottomPadding()
+    )
+}
+
 private fun calculateTopSpacing(topSpacing: TopSpacing): Int = when (topSpacing) {
     TopSpacing.WithToolbar -> SPACING_SMALL
-    TopSpacing.WithoutToolbar -> SPACING_EXTRA_LARGE
+    TopSpacing.WithoutToolbar -> SPACING_XX_LARGE
 }

@@ -19,12 +19,18 @@ package eu.europa.ec.commonfeature.util
 import eu.europa.ec.businesslogic.extension.decodeFromBase64
 import eu.europa.ec.businesslogic.util.safeLet
 import eu.europa.ec.businesslogic.util.toDateFormatted
-import eu.europa.ec.businesslogic.util.toLocalDate
 import eu.europa.ec.commonfeature.ui.document_details.model.DocumentJsonKeys
+import eu.europa.ec.eudi.wallet.document.DocumentId
+import eu.europa.ec.eudi.wallet.document.ElementIdentifier
 import eu.europa.ec.eudi.wallet.document.IssuedDocument
+import eu.europa.ec.eudi.wallet.document.NameSpace
+import eu.europa.ec.eudi.wallet.document.format.MsoMdocData
+import eu.europa.ec.eudi.wallet.document.format.SdJwtVcData
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 
 fun extractValueFromDocumentOrEmpty(
     document: IssuedDocument,
@@ -62,6 +68,14 @@ fun keyIsBase64(key: String): Boolean {
     return listOfBase64Keys.contains(key)
 }
 
+fun keyIsPortrait(key: String): Boolean {
+    return key == DocumentJsonKeys.PORTRAIT
+}
+
+fun keyIsSignature(key: String): Boolean {
+    return key == DocumentJsonKeys.SIGNATURE
+}
+
 private fun keyIsUserPseudonym(key: String): Boolean {
     return key == DocumentJsonKeys.USER_PSEUDONYM
 }
@@ -73,12 +87,20 @@ private fun keyIsGender(key: String): Boolean {
 
 private fun getGenderValue(value: String, resourceProvider: ResourceProvider): String =
     when (value) {
+        "0" -> {
+            resourceProvider.getString(R.string.request_gender_not_known)
+        }
+
         "1" -> {
             resourceProvider.getString(R.string.request_gender_male)
         }
 
         "2" -> {
             resourceProvider.getString(R.string.request_gender_female)
+        }
+
+        "9" -> {
+            resourceProvider.getString(R.string.request_gender_not_applicable)
         }
 
         else -> {
@@ -171,12 +193,32 @@ fun parseKeyValueUi(
 }
 
 fun documentHasExpired(
-    documentExpirationDate: String,
+    documentExpirationDate: Instant,
     currentDate: LocalDate = LocalDate.now(),
+    zoneId: ZoneId = ZoneId.systemDefault()
 ): Boolean {
-    val localDateOfDocumentExpirationDate = documentExpirationDate.toLocalDate()
+    return runCatching {
+        // Convert Instant to LocalDate using the provided ZoneId
+        val localDateOfDocumentExpiration = documentExpirationDate
+            .atZone(zoneId)
+            .toLocalDate()
 
-    return localDateOfDocumentExpirationDate?.let {
-        currentDate.isAfter(it)
-    } ?: false
+        // Check if the current date is after the document expiration date
+        currentDate.isAfter(localDateOfDocumentExpiration)
+    }.getOrElse {
+        // Default to false in case of any exception
+        false
+    }
 }
+
+val IssuedDocument.docNamespace: NameSpace?
+    get() = when (val data = this.data) {
+        is MsoMdocData -> data.nameSpaces.keys.first()
+        is SdJwtVcData -> null
+    }
+
+fun generateUniqueFieldId(
+    elementIdentifier: ElementIdentifier,
+    documentId: DocumentId,
+): String =
+    elementIdentifier + documentId

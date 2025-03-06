@@ -16,17 +16,37 @@
 
 package eu.europa.ec.corelogic.extension
 
-import eu.europa.ec.businesslogic.extension.compareLocaleLanguage
+import eu.europa.ec.businesslogic.extension.getLocalizedString
+import eu.europa.ec.businesslogic.extension.getLocalizedValue
 import eu.europa.ec.corelogic.model.DocumentIdentifier
 import eu.europa.ec.corelogic.model.toDocumentIdentifier
 import eu.europa.ec.eudi.wallet.document.format.MsoMdocFormat
 import eu.europa.ec.eudi.wallet.document.format.SdJwtVcFormat
 import eu.europa.ec.eudi.wallet.issue.openid4vci.Offer
+import java.net.URI
 import java.util.Locale
 
-fun Offer.getIssuerName(locale: Locale): String =
-    issuerMetadata.display.find { it.locale?.let { locale.compareLocaleLanguage(Locale(it)) } == true }?.name
-        ?: issuerMetadata.credentialIssuerIdentifier.value.value.host
+fun Offer.getIssuerName(locale: Locale): String {
+    return issuerMetadata.display.getLocalizedString(
+        userLocale = locale,
+        localeExtractor = {
+            it.locale?.let { Locale(it) }
+        },
+        stringExtractor = { it.name },
+        fallback = issuerMetadata.credentialIssuerIdentifier.value.value.host
+    )
+}
+
+fun Offer.getIssuerLogo(locale: Locale): URI? {
+    return issuerMetadata.display.getLocalizedValue(
+        userLocale = locale,
+        localeExtractor = {
+            it.locale?.let { Locale(it) }
+        },
+        valueExtractor = { it.logo?.uri },
+        fallback = null
+    )
+}
 
 val Offer.OfferedDocument.documentIdentifier: DocumentIdentifier?
     get() = when (val format = documentFormat) {
@@ -35,12 +55,15 @@ val Offer.OfferedDocument.documentIdentifier: DocumentIdentifier?
         null -> null
     }
 
-fun Offer.OfferedDocument.getName(locale: Locale): String? = configuration
-    .display
-    .find { locale.compareLocaleLanguage(it.locale) }
-    ?.name
-    ?: when (val format = documentFormat) {
-        is MsoMdocFormat -> format.docType
-        is SdJwtVcFormat -> format.vct
-        null -> null
-    }
+fun Offer.OfferedDocument.getName(locale: Locale): String? {
+    return configuration.display.getLocalizedValue(
+        userLocale = locale,
+        localeExtractor = { it.locale },
+        valueExtractor = { it.name },
+        fallback = when (val format = documentFormat) {
+            is MsoMdocFormat -> format.docType
+            is SdJwtVcFormat -> format.vct
+            null -> null
+        }
+    )
+}
