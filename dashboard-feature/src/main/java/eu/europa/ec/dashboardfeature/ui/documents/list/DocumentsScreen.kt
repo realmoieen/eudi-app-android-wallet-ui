@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2025 European Commission
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
  * Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
@@ -23,8 +23,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -53,27 +51,26 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import eu.europa.ec.commonfeature.model.DocumentUiIssuanceState
 import eu.europa.ec.corelogic.model.DocumentCategory
 import eu.europa.ec.corelogic.model.DocumentIdentifier
 import eu.europa.ec.corelogic.util.CoreActions
-import eu.europa.ec.dashboardfeature.model.DocumentUi
-import eu.europa.ec.dashboardfeature.model.SearchItem
+import eu.europa.ec.dashboardfeature.model.SearchItemUi
+import eu.europa.ec.dashboardfeature.ui.documents.detail.model.DocumentIssuanceStateUi
+import eu.europa.ec.dashboardfeature.ui.documents.list.model.DocumentUi
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.resourceslogic.theme.values.warning
 import eu.europa.ec.uilogic.component.AppIcons
 import eu.europa.ec.uilogic.component.DualSelectorButton
-import eu.europa.ec.uilogic.component.DualSelectorButtonData
+import eu.europa.ec.uilogic.component.DualSelectorButtonDataUi
 import eu.europa.ec.uilogic.component.DualSelectorButtons
 import eu.europa.ec.uilogic.component.FiltersSearchBar
-import eu.europa.ec.uilogic.component.ListItemData
-import eu.europa.ec.uilogic.component.ListItemMainContentData
+import eu.europa.ec.uilogic.component.ListItemDataUi
+import eu.europa.ec.uilogic.component.ListItemMainContentDataUi
 import eu.europa.ec.uilogic.component.ModalOptionUi
 import eu.europa.ec.uilogic.component.SectionTitle
 import eu.europa.ec.uilogic.component.content.BroadcastAction
@@ -88,7 +85,7 @@ import eu.europa.ec.uilogic.component.utils.SPACING_LARGE
 import eu.europa.ec.uilogic.component.utils.SPACING_MEDIUM
 import eu.europa.ec.uilogic.component.utils.SPACING_SMALL
 import eu.europa.ec.uilogic.component.utils.VSpacer
-import eu.europa.ec.uilogic.component.wrap.BottomSheetTextData
+import eu.europa.ec.uilogic.component.wrap.BottomSheetTextDataUi
 import eu.europa.ec.uilogic.component.wrap.BottomSheetWithOptionsList
 import eu.europa.ec.uilogic.component.wrap.BottomSheetWithTwoBigIcons
 import eu.europa.ec.uilogic.component.wrap.ButtonConfig
@@ -101,6 +98,7 @@ import eu.europa.ec.uilogic.component.wrap.WrapIconButton
 import eu.europa.ec.uilogic.component.wrap.WrapListItem
 import eu.europa.ec.uilogic.component.wrap.WrapModalBottomSheet
 import eu.europa.ec.uilogic.extension.finish
+import eu.europa.ec.uilogic.extension.paddingFrom
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -110,7 +108,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 typealias DashboardEvent = eu.europa.ec.dashboardfeature.ui.dashboard.Event
-typealias ShowSideMenuEvent = eu.europa.ec.dashboardfeature.ui.dashboard.Event.SideMenu.Show
+typealias OpenSideMenuEvent = eu.europa.ec.dashboardfeature.ui.dashboard.Event.SideMenu.Open
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -132,6 +130,7 @@ fun DocumentsScreen(
         isLoading = state.isLoading,
         navigatableAction = ScreenNavigateAction.NONE,
         onBack = { context.finish() },
+        contentErrorConfig = state.error,
         topBar = {
             TopBar(
                 onEventSend = { viewModel.setEvent(it) },
@@ -208,8 +207,7 @@ private fun TopBar(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                horizontal = SPACING_SMALL.dp,
-                vertical = SPACING_MEDIUM.dp
+                all = SPACING_SMALL.dp
             )
     ) {
         WrapIconButton(
@@ -217,7 +215,7 @@ private fun TopBar(
             iconData = AppIcons.Menu,
             customTint = MaterialTheme.colorScheme.onSurface,
         ) {
-            onDashboardEventSent(ShowSideMenuEvent)
+            onDashboardEventSent(OpenSideMenuEvent)
         }
 
         Text(
@@ -252,21 +250,14 @@ private fun Content(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(
-                paddingValues = PaddingValues(
-                    top = paddingValues.calculateTopPadding(),
-                    bottom = 0.dp,
-                    start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
-                    end = paddingValues.calculateEndPadding(LayoutDirection.Ltr)
-                )
-            ),
-        contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding()),
+            .paddingFrom(paddingValues, bottom = false),
+        contentPadding = PaddingValues(bottom = SPACING_MEDIUM.dp),
     ) {
         item {
-            val searchItem =
-                SearchItem(searchLabel = stringResource(R.string.documents_screen_search_label))
+            val searchItemUi =
+                SearchItemUi(searchLabel = stringResource(R.string.documents_screen_search_label))
             FiltersSearchBar(
-                placeholder = searchItem.searchLabel,
+                placeholder = searchItemUi.searchLabel,
                 onValueChange = { onEventSend(Event.OnSearchQueryChanged(it)) },
                 onFilterClick = { onEventSend(Event.FiltersPressed) },
                 onClearClick = { onEventSend(Event.OnSearchQueryChanged("")) },
@@ -367,8 +358,8 @@ private fun DocumentCategory(
                 item = documentItem.uiData,
                 onItemClick = {
                     val onItemClickEvent = if (
-                        documentItem.documentIssuanceState == DocumentUiIssuanceState.Pending
-                        || documentItem.documentIssuanceState == DocumentUiIssuanceState.Failed
+                        documentItem.documentIssuanceState == DocumentIssuanceStateUi.Pending
+                        || documentItem.documentIssuanceState == DocumentIssuanceStateUi.Failed
                     ) {
                         Event.BottomSheet.DeferredDocument.DeferredNotReadyYet.DocumentSelected(
                             documentId = documentItem.uiData.itemId
@@ -379,11 +370,11 @@ private fun DocumentCategory(
                     onEventSend(onItemClickEvent)
                 },
                 supportingTextColor = when (documentItem.documentIssuanceState) {
-                    DocumentUiIssuanceState.Issued -> null
-                    DocumentUiIssuanceState.Pending -> MaterialTheme.colorScheme.warning
-                    DocumentUiIssuanceState.Failed -> MaterialTheme.colorScheme.error
-                    DocumentUiIssuanceState.Expired -> MaterialTheme.colorScheme.error
-                    DocumentUiIssuanceState.Revoked -> MaterialTheme.colorScheme.error
+                    DocumentIssuanceStateUi.Issued -> null
+                    DocumentIssuanceStateUi.Pending -> MaterialTheme.colorScheme.warning
+                    DocumentIssuanceStateUi.Failed -> MaterialTheme.colorScheme.error
+                    DocumentIssuanceStateUi.Expired -> MaterialTheme.colorScheme.error
+                    DocumentIssuanceStateUi.Revoked -> MaterialTheme.colorScheme.error
                 }
             )
         }
@@ -396,9 +387,9 @@ private fun NoResults(
 ) {
     Column(modifier = modifier) {
         WrapListItem(
-            item = ListItemData(
+            item = ListItemDataUi(
                 itemId = stringResource(R.string.documents_screen_search_no_results_id),
-                mainContentData = ListItemMainContentData.Text(text = stringResource(R.string.documents_screen_search_no_results)),
+                mainContentData = ListItemMainContentDataUi.Text(text = stringResource(R.string.documents_screen_search_no_results)),
             ),
             onItemClick = null,
             modifier = Modifier.fillMaxWidth(),
@@ -503,7 +494,7 @@ private fun DocumentsSheetContent(
 
         is DocumentsBottomSheetContent.AddDocument -> {
             BottomSheetWithTwoBigIcons(
-                textData = BottomSheetTextData(
+                textData = BottomSheetTextDataUi(
                     title = stringResource(R.string.documents_screen_add_document_title),
                     message = stringResource(R.string.documents_screen_add_document_description)
                 ),
@@ -525,7 +516,7 @@ private fun DocumentsSheetContent(
 
         is DocumentsBottomSheetContent.DeferredDocumentPressed -> {
             DialogBottomSheet(
-                textData = BottomSheetTextData(
+                textData = BottomSheetTextDataUi(
                     title = stringResource(
                         id = R.string.dashboard_bottom_sheet_deferred_document_pressed_title
                     ),
@@ -554,7 +545,7 @@ private fun DocumentsSheetContent(
 
         is DocumentsBottomSheetContent.DeferredDocumentsReady -> {
             BottomSheetWithOptionsList(
-                textData = BottomSheetTextData(
+                textData = BottomSheetTextDataUi(
                     title = stringResource(
                         id = R.string.dashboard_bottom_sheet_deferred_documents_ready_title
                     ),
@@ -593,10 +584,10 @@ private fun DocumentsScreenPreview() {
             val validUntil = "Valid Until"
             val documentsList = listOf(
                 DocumentUi(
-                    documentIssuanceState = DocumentUiIssuanceState.Issued,
-                    uiData = ListItemData(
+                    documentIssuanceState = DocumentIssuanceStateUi.Issued,
+                    uiData = ListItemDataUi(
                         itemId = "id1",
-                        mainContentData = ListItemMainContentData.Text(text = "Document 1"),
+                        mainContentData = ListItemMainContentDataUi.Text(text = "Document 1"),
                         overlineText = issuerName,
                         supportingText = validUntil,
                         leadingContentData = null,
@@ -606,10 +597,10 @@ private fun DocumentsScreenPreview() {
                     documentCategory = DocumentCategory.Government
                 ),
                 DocumentUi(
-                    documentIssuanceState = DocumentUiIssuanceState.Issued,
-                    uiData = ListItemData(
+                    documentIssuanceState = DocumentIssuanceStateUi.Issued,
+                    uiData = ListItemDataUi(
                         itemId = "id2",
-                        mainContentData = ListItemMainContentData.Text(text = "Document 2"),
+                        mainContentData = ListItemMainContentDataUi.Text(text = "Document 2"),
                         overlineText = issuerName,
                         supportingText = validUntil,
                         leadingContentData = null,
@@ -619,10 +610,10 @@ private fun DocumentsScreenPreview() {
                     documentCategory = DocumentCategory.Government
                 ),
                 DocumentUi(
-                    documentIssuanceState = DocumentUiIssuanceState.Issued,
-                    uiData = ListItemData(
+                    documentIssuanceState = DocumentIssuanceStateUi.Issued,
+                    uiData = ListItemDataUi(
                         itemId = "id3",
-                        mainContentData = ListItemMainContentData.Text(text = "Document 3"),
+                        mainContentData = ListItemMainContentDataUi.Text(text = "Document 3"),
                         overlineText = issuerName,
                         supportingText = validUntil,
                         leadingContentData = null,
@@ -632,10 +623,10 @@ private fun DocumentsScreenPreview() {
                     documentCategory = DocumentCategory.Finance
                 ),
                 DocumentUi(
-                    documentIssuanceState = DocumentUiIssuanceState.Issued,
-                    uiData = ListItemData(
+                    documentIssuanceState = DocumentIssuanceStateUi.Issued,
+                    uiData = ListItemDataUi(
                         itemId = "id4",
-                        mainContentData = ListItemMainContentData.Text(text = "Document 4"),
+                        mainContentData = ListItemMainContentDataUi.Text(text = "Document 4"),
                         overlineText = issuerName,
                         supportingText = validUntil,
                         leadingContentData = null,
@@ -649,7 +640,7 @@ private fun DocumentsScreenPreview() {
                 state = State(
                     isLoading = false,
                     isFilteringActive = false,
-                    sortOrder = DualSelectorButtonData(
+                    sortOrder = DualSelectorButtonDataUi(
                         first = "first",
                         second = "second",
                         selectedButton = DualSelectorButton.FIRST,

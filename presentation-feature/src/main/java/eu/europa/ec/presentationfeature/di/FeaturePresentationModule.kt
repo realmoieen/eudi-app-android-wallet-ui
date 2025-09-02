@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2025 European Commission
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
  * Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
@@ -16,6 +16,7 @@
 
 package eu.europa.ec.presentationfeature.di
 
+import eu.europa.ec.businesslogic.provider.UuidProvider
 import eu.europa.ec.commonfeature.interactor.DeviceAuthenticationInteractor
 import eu.europa.ec.corelogic.controller.WalletCoreDocumentsController
 import eu.europa.ec.corelogic.controller.WalletCorePresentationController
@@ -39,11 +40,13 @@ class FeaturePresentationModule
 @Factory
 fun providePresentationRequestInteractor(
     resourceProvider: ResourceProvider,
+    uuidProvider: UuidProvider,
     walletCoreDocumentsController: WalletCoreDocumentsController,
     @ScopeId(name = PRESENTATION_SCOPE_ID) walletCorePresentationController: WalletCorePresentationController,
 ): PresentationRequestInteractor {
     return PresentationRequestInteractorImpl(
         resourceProvider,
+        uuidProvider,
         walletCorePresentationController,
         walletCoreDocumentsController
     )
@@ -65,10 +68,12 @@ fun providePresentationSuccessInteractor(
     @ScopeId(name = PRESENTATION_SCOPE_ID) walletCorePresentationController: WalletCorePresentationController,
     walletCoreDocumentsController: WalletCoreDocumentsController,
     resourceProvider: ResourceProvider,
+    uuidProvider: UuidProvider,
 ): PresentationSuccessInteractor {
     return PresentationSuccessInteractorImpl(
         walletCorePresentationController,
         walletCoreDocumentsController,
         resourceProvider,
+        uuidProvider,
     )
 }

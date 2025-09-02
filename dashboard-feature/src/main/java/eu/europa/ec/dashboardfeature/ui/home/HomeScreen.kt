@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2025 European Commission
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
  * Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
@@ -24,8 +24,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -44,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -52,7 +49,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.uilogic.component.AppIconAndText
-import eu.europa.ec.uilogic.component.AppIconAndTextData
+import eu.europa.ec.uilogic.component.AppIconAndTextDataUi
 import eu.europa.ec.uilogic.component.AppIcons
 import eu.europa.ec.uilogic.component.ModalOptionUi
 import eu.europa.ec.uilogic.component.content.ContentScreen
@@ -64,7 +61,7 @@ import eu.europa.ec.uilogic.component.utils.OneTimeLaunchedEffect
 import eu.europa.ec.uilogic.component.utils.SPACING_MEDIUM
 import eu.europa.ec.uilogic.component.utils.SPACING_SMALL
 import eu.europa.ec.uilogic.component.wrap.ActionCardConfig
-import eu.europa.ec.uilogic.component.wrap.BottomSheetTextData
+import eu.europa.ec.uilogic.component.wrap.BottomSheetTextDataUi
 import eu.europa.ec.uilogic.component.wrap.BottomSheetWithTwoBigIcons
 import eu.europa.ec.uilogic.component.wrap.DialogBottomSheet
 import eu.europa.ec.uilogic.component.wrap.GenericBottomSheet
@@ -75,6 +72,7 @@ import eu.europa.ec.uilogic.component.wrap.WrapModalBottomSheet
 import eu.europa.ec.uilogic.extension.finish
 import eu.europa.ec.uilogic.extension.openAppSettings
 import eu.europa.ec.uilogic.extension.openBleSettings
+import eu.europa.ec.uilogic.extension.paddingFrom
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -84,7 +82,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 typealias DashboardEvent = eu.europa.ec.dashboardfeature.ui.dashboard.Event
-typealias ShowSideMenuEvent = eu.europa.ec.dashboardfeature.ui.dashboard.Event.SideMenu.Show
+typealias OpenSideMenuEvent = eu.europa.ec.dashboardfeature.ui.dashboard.Event.SideMenu.Open
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -140,7 +138,6 @@ fun HomeScreen(
             HomeScreenSheetContent(
                 sheetContent = state.sheetContent,
                 onEventSent = { event -> viewModel.setEvent(event) },
-                modalBottomSheetState = bottomSheetState
             )
         }
     }
@@ -158,8 +155,7 @@ private fun TopBar(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                horizontal = SPACING_SMALL.dp,
-                vertical = SPACING_MEDIUM.dp
+                all = SPACING_SMALL.dp
             )
     ) {
         // home menu icon
@@ -168,13 +164,13 @@ private fun TopBar(
             iconData = AppIcons.Menu,
             customTint = MaterialTheme.colorScheme.onSurface,
         ) {
-            onEventSent(ShowSideMenuEvent)
+            onEventSent(OpenSideMenuEvent)
         }
 
         // wallet logo
         AppIconAndText(
             modifier = Modifier.align(Alignment.Center),
-            appIconAndTextData = AppIconAndTextData()
+            appIconAndTextData = AppIconAndTextDataUi()
         )
     }
 }
@@ -194,14 +190,7 @@ private fun Content(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(
-                paddingValues = PaddingValues(
-                    top = paddingValues.calculateTopPadding(),
-                    bottom = 0.dp,
-                    start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
-                    end = paddingValues.calculateEndPadding(LayoutDirection.Ltr)
-                )
-            )
+            .paddingFrom(paddingValues, bottom = false)
             .verticalScroll(scrollState)
             .padding(vertical = SPACING_MEDIUM.dp),
         verticalArrangement = Arrangement.spacedBy(SPACING_MEDIUM.dp)
@@ -300,71 +289,56 @@ private fun handleNavigationEffect(
 private fun HomeScreenSheetContent(
     sheetContent: HomeScreenBottomSheetContent,
     onEventSent: (event: Event) -> Unit,
-    modalBottomSheetState: SheetState
 ) {
     when (sheetContent) {
         is HomeScreenBottomSheetContent.Authenticate -> {
-            WrapModalBottomSheet(
-                onDismissRequest = {
-                    onEventSent(Event.BottomSheet.UpdateBottomSheetState(isOpen = false))
-                },
-                sheetState = modalBottomSheetState
-            ) {
-                BottomSheetWithTwoBigIcons(
-                    textData = BottomSheetTextData(
-                        title = stringResource(R.string.home_screen_authenticate),
-                        message = stringResource(R.string.home_screen_authenticate_description)
+            BottomSheetWithTwoBigIcons(
+                textData = BottomSheetTextDataUi(
+                    title = stringResource(R.string.home_screen_authenticate),
+                    message = stringResource(R.string.home_screen_authenticate_description)
+                ),
+                options = listOf(
+                    ModalOptionUi(
+                        title = stringResource(R.string.home_screen_authenticate_option_in_person),
+                        leadingIcon = AppIcons.PresentDocumentInPerson,
+                        event = Event.BottomSheet.Authenticate.OpenAuthenticateInPerson,
                     ),
-                    options = listOf(
-                        ModalOptionUi(
-                            title = stringResource(R.string.home_screen_authenticate_option_in_person),
-                            leadingIcon = AppIcons.PresentDocumentInPerson,
-                            event = Event.BottomSheet.Authenticate.OpenAuthenticateInPerson,
-                        ),
-                        ModalOptionUi(
-                            title = stringResource(R.string.home_screen_add_document_option_online),
-                            leadingIcon = AppIcons.PresentDocumentOnline,
-                            event = Event.BottomSheet.Authenticate.OpenAuthenticateOnLine,
-                        )
-                    ),
-                    onEventSent = { event ->
-                        onEventSent(event)
-                    }
-                )
-            }
+                    ModalOptionUi(
+                        title = stringResource(R.string.home_screen_add_document_option_online),
+                        leadingIcon = AppIcons.PresentDocumentOnline,
+                        event = Event.BottomSheet.Authenticate.OpenAuthenticateOnLine,
+                    )
+                ),
+                onEventSent = { event ->
+                    onEventSent(event)
+                }
+            )
         }
 
         is HomeScreenBottomSheetContent.Sign -> {
-            WrapModalBottomSheet(
-                onDismissRequest = {
-                    onEventSent(Event.BottomSheet.UpdateBottomSheetState(isOpen = false))
-                },
-                sheetState = modalBottomSheetState
-            ) {
-                BottomSheetWithTwoBigIcons(
-                    textData = BottomSheetTextData(
-                        title = stringResource(R.string.home_screen_sign_document),
-                        message = stringResource(R.string.home_screen_sign_document_description)
+            BottomSheetWithTwoBigIcons(
+                textData = BottomSheetTextDataUi(
+                    title = stringResource(R.string.home_screen_sign_document),
+                    message = stringResource(R.string.home_screen_sign_document_description)
+                ),
+                options = listOf(
+                    ModalOptionUi(
+                        title = stringResource(R.string.home_screen_sign_document_option_from_device),
+                        leadingIcon = AppIcons.SignDocumentFromDevice,
+                        leadingIconTint = MaterialTheme.colorScheme.primary,
+                        event = Event.BottomSheet.SignDocument.OpenFromDevice,
                     ),
-                    options = listOf(
-                        ModalOptionUi(
-                            title = stringResource(R.string.home_screen_sign_document_option_from_device),
-                            leadingIcon = AppIcons.SignDocumentFromDevice,
-                            leadingIconTint = MaterialTheme.colorScheme.primary,
-                            event = Event.BottomSheet.SignDocument.OpenFromDevice,
-                        ),
-                        ModalOptionUi(
-                            title = stringResource(R.string.home_screen_sign_document_option_scan_qr),
-                            leadingIcon = AppIcons.SignDocumentFromQr,
-                            leadingIconTint = MaterialTheme.colorScheme.primary,
-                            event = Event.BottomSheet.SignDocument.OpenScanQR,
-                        )
-                    ),
-                    onEventSent = { event ->
-                        onEventSent(event)
-                    }
-                )
-            }
+                    ModalOptionUi(
+                        title = stringResource(R.string.home_screen_sign_document_option_scan_qr),
+                        leadingIcon = AppIcons.SignDocumentFromQr,
+                        leadingIconTint = MaterialTheme.colorScheme.primary,
+                        event = Event.BottomSheet.SignDocument.OpenScanQR,
+                    )
+                ),
+                onEventSent = { event ->
+                    onEventSent(event)
+                }
+            )
         }
 
         is HomeScreenBottomSheetContent.LearnMoreAboutAuthenticate -> {
@@ -445,7 +419,7 @@ private fun HomeScreenSheetContent(
 
         is HomeScreenBottomSheetContent.Bluetooth -> {
             DialogBottomSheet(
-                textData = BottomSheetTextData(
+                textData = BottomSheetTextDataUi(
                     title = stringResource(id = R.string.dashboard_bottom_sheet_bluetooth_title),
                     message = stringResource(id = R.string.dashboard_bottom_sheet_bluetooth_subtitle),
                     positiveButtonText = stringResource(id = R.string.dashboard_bottom_sheet_bluetooth_primary_button_text),
@@ -477,6 +451,7 @@ private fun RequiredPermissionsAsk(
         permissions.add(Manifest.permission.BLUETOOTH_SCAN)
         permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
     }
+
     if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2 && state.isBleCentralClientModeEnabled) {
         permissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
         permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION)

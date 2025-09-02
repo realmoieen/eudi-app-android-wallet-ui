@@ -88,6 +88,10 @@
 -dontwarn com.eygraber.uri.JvmUriKt
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 -dontwarn org.slf4j.impl.StaticMDCBinder
+-dontwarn org.koin.androidx.viewmodel.GetViewModelKt
+-dontwarn org.koin.compose.stable.StableHoldersKt
+-dontwarn org.koin.compose.stable.StableParametersDefinition
+-dontwarn okhttp3.internal.Util
 
 # Retrofit
 -keep,allowobfuscation,allowshrinking interface retrofit2.Call

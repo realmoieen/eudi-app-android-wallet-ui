@@ -123,7 +123,7 @@ class RQESConfigImpl : EudiRQESUiConfig {
             QtspData(
                 name = "your_name",
                 endpoint = "your_endpoint".toUri(),
-                scaUrl = "your_sca",
+                tsaUrl = "your_tsaUrl",
                 clientId = "your_clientid",
                 clientSecret = "your_secret",
                 authFlowRedirectionURI = URI.create("your_uri"),
@@ -411,15 +411,14 @@ The project utilizes Koin for Dependency Injection (DI), thus requiring adjustme
 Implementation Example:
 ```Kotlin
 class PrefsPinStorageProvider(
-    private val prefsController: PrefsController
+    private val prefsController: PrefsController,
+    private val cryptoController: CryptoController
 ) : PinStorageProvider {
 
-    override fun retrievePin(): String {
-        return prefsController.getString("DevicePin", "")
-    }
+    override fun retrievePin(): String = decryptedAndLoad()
 
     override fun setPin(pin: String) {
-        prefsController.setString("DevicePin", pin)
+       encryptAndStore(pin)
     }
 
     override fun isPinValid(pin: String): Boolean = retrievePin() == pin
@@ -443,9 +442,10 @@ Config Construction via Koin DI Example:
 ```Kotlin
 @Single
 fun provideStorageConfig(
-    prefsController: PrefsController
+    prefsController: PrefsController,
+    cryptoController: CryptoController
 ): StorageConfig = StorageConfigImpl(
-    pinImpl = PrefsPinStorageProvider(prefsController),
+    pinImpl = PrefsPinStorageProvider(prefsController, cryptoController),
     biometryImpl = PrefsBiometryStorageProvider(prefsController)
 )
 ```

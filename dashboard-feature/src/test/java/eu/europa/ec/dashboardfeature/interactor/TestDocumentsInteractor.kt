@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2025 European Commission
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
  * Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
@@ -25,31 +25,31 @@ import eu.europa.ec.businesslogic.validator.model.FilterableItem
 import eu.europa.ec.businesslogic.validator.model.FilterableList
 import eu.europa.ec.businesslogic.validator.model.Filters
 import eu.europa.ec.businesslogic.validator.model.SortOrder
-import eu.europa.ec.commonfeature.model.DocumentUiIssuanceState
-import eu.europa.ec.commonfeature.util.TestsData.mockedPendingMdlUi
-import eu.europa.ec.commonfeature.util.TestsData.mockedPendingPidUi
 import eu.europa.ec.corelogic.controller.DeleteDocumentPartialState
 import eu.europa.ec.corelogic.controller.IssueDeferredDocumentPartialState
 import eu.europa.ec.corelogic.controller.WalletCoreDocumentsController
-import eu.europa.ec.corelogic.model.DeferredDocumentData
+import eu.europa.ec.corelogic.model.DeferredDocumentDataDomain
 import eu.europa.ec.corelogic.model.DocumentCategory
 import eu.europa.ec.corelogic.model.DocumentIdentifier
 import eu.europa.ec.corelogic.model.FormatType
-import eu.europa.ec.dashboardfeature.model.DocumentUi
+import eu.europa.ec.dashboardfeature.ui.documents.detail.model.DocumentIssuanceStateUi
+import eu.europa.ec.dashboardfeature.ui.documents.list.model.DocumentUi
+import eu.europa.ec.dashboardfeature.util.mockedPendingMdlUi
+import eu.europa.ec.dashboardfeature.util.mockedPendingPidUi
 import eu.europa.ec.eudi.wallet.document.Document
 import eu.europa.ec.eudi.wallet.document.DocumentId
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
-import eu.europa.ec.testfeature.mockedExceptionWithMessage
-import eu.europa.ec.testfeature.mockedExceptionWithNoMessage
-import eu.europa.ec.testfeature.mockedFullDocuments
-import eu.europa.ec.testfeature.mockedGenericErrorMessage
-import eu.europa.ec.testfeature.mockedPlainFailureMessage
+import eu.europa.ec.testfeature.util.getMockedFullDocuments
+import eu.europa.ec.testfeature.util.mockedExceptionWithMessage
+import eu.europa.ec.testfeature.util.mockedExceptionWithNoMessage
+import eu.europa.ec.testfeature.util.mockedGenericErrorMessage
+import eu.europa.ec.testfeature.util.mockedPlainFailureMessage
 import eu.europa.ec.testlogic.extension.runFlowTest
 import eu.europa.ec.testlogic.extension.runTest
 import eu.europa.ec.testlogic.extension.toFlow
 import eu.europa.ec.testlogic.rule.CoroutineTestRule
-import eu.europa.ec.uilogic.component.ListItemData
-import eu.europa.ec.uilogic.component.ListItemMainContentData
+import eu.europa.ec.uilogic.component.ListItemDataUi
+import eu.europa.ec.uilogic.component.ListItemMainContentDataUi
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.After
@@ -116,6 +116,7 @@ class TestDocumentsInteractor {
     fun `Given Case 1, When deleteDocument is called, Then Case 1 Expected Result is returned`() {
         coroutineRule.runTest {
             // Given
+            val mockedFullDocuments = getMockedFullDocuments()
             whenever(walletCoreDocumentsController.getAllDocuments())
                 .thenReturn(mockedFullDocuments)
             assert(walletCoreDocumentsController.getAllDocuments().size == 2)
@@ -262,7 +263,7 @@ class TestDocumentsInteractor {
                 mockDeferredPendingDocId1 to mockDeferredPendingType1,
                 mockDeferredPendingDocId2 to mockDeferredPendingType2
             )
-            val successData = DeferredDocumentData(
+            val successData = DeferredDocumentDataDomain(
                 documentId = mockDeferredPendingDocId1,
                 formatType = mockDeferredPendingType1,
                 docName = mockDeferredPendingName1
@@ -350,7 +351,7 @@ class TestDocumentsInteractor {
             val deferredDocuments: Map<DocumentId, FormatType> = mapOf(
                 mockDeferredPendingDocId to mockDeferredPendingType
             )
-            val successData = DeferredDocumentData(
+            val successData = DeferredDocumentDataDomain(
                 documentId = mockDeferredPendingDocId,
                 formatType = mockDeferredPendingType,
                 docName = mockDeferredPendingName
@@ -507,7 +508,7 @@ class TestDocumentsInteractor {
                 assertTrue(state is DocumentInteractorFilterPartialState.FilterApplyResult)
                 assertEquals(state.documents.first().second.first().documentCategory.id, 1)
                 assertEquals(
-                    (state.documents.first().second.first().uiData.mainContentData as ListItemMainContentData.Text).text,
+                    (state.documents.first().second.first().uiData.mainContentData as ListItemMainContentDataUi.Text).text,
                     "test"
                 )
             }
@@ -530,7 +531,7 @@ class TestDocumentsInteractor {
                 assertTrue(state is DocumentInteractorFilterPartialState.FilterUpdateResult)
                 assertEquals(state.filters.size, mockFilters.filterGroups.size)
                 assertEquals(
-                    (state.filters.first().header.mainContentData as ListItemMainContentData.Text).text,
+                    (state.filters.first().header.mainContentData as ListItemMainContentDataUi.Text).text,
                     mockFilters.filterGroups.first().name
                 )
                 assertEquals(
@@ -565,10 +566,10 @@ class TestDocumentsInteractor {
     //region Mock domain models
     private val mockFilterableItem = FilterableItem(
         payload = DocumentUi(
-            documentIssuanceState = DocumentUiIssuanceState.Pending,
-            uiData = ListItemData(
+            documentIssuanceState = DocumentIssuanceStateUi.Pending,
+            uiData = ListItemDataUi(
                 itemId = "sumo",
-                mainContentData = ListItemMainContentData.Text("test"),
+                mainContentData = ListItemMainContentDataUi.Text("test"),
                 overlineText = null,
                 supportingText = null,
                 leadingContentData = null,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2025 European Commission
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
  * Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
@@ -17,13 +17,13 @@
 package eu.europa.ec.dashboardfeature.ui.transactions.detail
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
@@ -36,23 +36,22 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import eu.europa.ec.dashboardfeature.model.TransactionDetailsCardData
-import eu.europa.ec.dashboardfeature.model.TransactionDetailsDataSharedHolder
-import eu.europa.ec.dashboardfeature.model.TransactionDetailsDataSignedHolder
-import eu.europa.ec.dashboardfeature.model.TransactionDetailsUi
+import eu.europa.ec.dashboardfeature.ui.transactions.detail.model.TransactionDetailsCardUi
+import eu.europa.ec.dashboardfeature.ui.transactions.detail.model.TransactionDetailsDataSharedHolderUi
+import eu.europa.ec.dashboardfeature.ui.transactions.detail.model.TransactionDetailsDataSignedHolderUi
+import eu.europa.ec.dashboardfeature.ui.transactions.detail.model.TransactionDetailsUi
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.resourceslogic.theme.values.success
 import eu.europa.ec.uilogic.component.AppIcons
-import eu.europa.ec.uilogic.component.ListItemData
-import eu.europa.ec.uilogic.component.ListItemMainContentData
-import eu.europa.ec.uilogic.component.ListItemTrailingContentData
+import eu.europa.ec.uilogic.component.ListItemDataUi
+import eu.europa.ec.uilogic.component.ListItemMainContentDataUi
+import eu.europa.ec.uilogic.component.ListItemTrailingContentDataUi
 import eu.europa.ec.uilogic.component.SectionTitle
 import eu.europa.ec.uilogic.component.content.ContentScreen
 import eu.europa.ec.uilogic.component.content.ContentTitle
@@ -66,12 +65,13 @@ import eu.europa.ec.uilogic.component.utils.SPACING_MEDIUM
 import eu.europa.ec.uilogic.component.utils.SPACING_SMALL
 import eu.europa.ec.uilogic.component.wrap.ButtonConfig
 import eu.europa.ec.uilogic.component.wrap.ButtonType
-import eu.europa.ec.uilogic.component.wrap.ExpandableListItem
+import eu.europa.ec.uilogic.component.wrap.ExpandableListItemUi
 import eu.europa.ec.uilogic.component.wrap.WrapButton
 import eu.europa.ec.uilogic.component.wrap.WrapCard
 import eu.europa.ec.uilogic.component.wrap.WrapChip
 import eu.europa.ec.uilogic.component.wrap.WrapExpandableListItem
 import eu.europa.ec.uilogic.component.wrap.WrapIcon
+import eu.europa.ec.uilogic.extension.paddingFrom
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.emptyFlow
@@ -114,58 +114,55 @@ private fun Content(
     onNavigationRequested: (Effect.Navigation) -> Unit,
     paddingValues: PaddingValues,
 ) {
-    Column(
+    Box(
         modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(
-                paddingValues = PaddingValues(
-                    top = paddingValues.calculateTopPadding(),
-                    bottom = 0.dp,
-                    start = paddingValues.calculateStartPadding(LocalLayoutDirection.current),
-                    end = paddingValues.calculateEndPadding(LocalLayoutDirection.current)
-                )
-            )
+            .paddingFrom(paddingValues, bottom = false)
     ) {
-        ContentTitle(title = state.title)
-
-        state.transactionDetailsUi?.let { safeTransactionDetailsUi ->
-            TransactionDetailsCard(
-                modifier = Modifier.fillMaxWidth(),
-                item = safeTransactionDetailsUi.transactionDetailsCardData
-            )
-        }
-
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = SPACING_LARGE.dp),
-            verticalArrangement = Arrangement.spacedBy(SPACING_LARGE.dp)
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
         ) {
-
-            state.transactionDetailsUi?.transactionDetailsDataShared?.let { safeTransactionDetailsDataShared ->
-                ExpandableDataSection(
-                    modifier = Modifier.fillMaxWidth(),
-                    sectionTitle = stringResource(R.string.transaction_details_data_shared_section_title),
-                    dataItems = safeTransactionDetailsDataShared.dataSharedItems,
-                    onEventSend = onEventSend,
-                )
-            }
-
-            state.transactionDetailsUi?.transactionDetailsDataSigned?.dataSignedItems?.let { safeDataSignedItems ->
-                ExpandableDataSection(
-                    modifier = Modifier.fillMaxWidth(),
-                    sectionTitle = stringResource(R.string.transaction_details_data_signed_section_title),
-                    dataItems = safeDataSignedItems,
-                    onEventSend = onEventSend,
-                )
-            }
+            ContentTitle(title = state.title)
 
             state.transactionDetailsUi?.let { safeTransactionDetailsUi ->
-                if (safeTransactionDetailsUi.transactionDetailsDataShared.dataSharedItems.isNotEmpty()
-                    || safeTransactionDetailsUi.transactionDetailsDataSigned?.dataSignedItems?.isNotEmpty() == true
-                ) {
-                    ButtonsSection(onEventSend = onEventSend)
+                TransactionDetailsCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    item = safeTransactionDetailsUi.transactionDetailsCardUi
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = SPACING_MEDIUM.dp),
+                verticalArrangement = Arrangement.spacedBy(SPACING_LARGE.dp)
+            ) {
+
+                state.transactionDetailsUi?.transactionDetailsDataShared?.let { safeTransactionDetailsDataShared ->
+                    ExpandableDataSection(
+                        modifier = Modifier.fillMaxWidth(),
+                        sectionTitle = stringResource(R.string.transaction_details_data_shared_section_title),
+                        dataItems = safeTransactionDetailsDataShared.dataSharedItems,
+                        onEventSend = onEventSend,
+                    )
+                }
+
+                state.transactionDetailsUi?.transactionDetailsDataSigned?.dataSignedItems?.let { safeDataSignedItems ->
+                    ExpandableDataSection(
+                        modifier = Modifier.fillMaxWidth(),
+                        sectionTitle = stringResource(R.string.transaction_details_data_signed_section_title),
+                        dataItems = safeDataSignedItems,
+                        onEventSend = onEventSend,
+                    )
+                }
+
+                state.transactionDetailsUi?.let { safeTransactionDetailsUi ->
+                    if (safeTransactionDetailsUi.transactionDetailsDataShared.dataSharedItems.isNotEmpty()
+                        || safeTransactionDetailsUi.transactionDetailsDataSigned?.dataSignedItems?.isNotEmpty() == true
+                    ) {
+                        ButtonsSection(onEventSend = onEventSend)
+                    }
                 }
             }
         }
@@ -202,7 +199,7 @@ private fun handleNavigationEffect(
 @Composable
 private fun TransactionDetailsCard(
     modifier: Modifier = Modifier,
-    item: TransactionDetailsCardData,
+    item: TransactionDetailsCardUi,
 ) {
     WrapCard(
         modifier = modifier,
@@ -290,7 +287,7 @@ private fun TransactionDetailsCard(
 private fun ExpandableDataSection(
     modifier: Modifier,
     sectionTitle: String,
-    dataItems: List<ExpandableListItem.NestedListItemData>,
+    dataItems: List<ExpandableListItemUi.NestedListItem>,
     onEventSend: (Event) -> Unit
 ) {
     if (dataItems.isNotEmpty()) {
@@ -383,7 +380,7 @@ private fun PreviewTransactionDetailsCompletedCard(
     @PreviewParameter(TextLengthPreviewProvider::class) text: String
 ) {
     PreviewTheme {
-        val transactionDetailsCardData = TransactionDetailsCardData(
+        val transactionDetailsCardUi = TransactionDetailsCardUi(
             transactionTypeLabel = "Data sharing",
             relyingPartyName = "RP name $text",
             transactionDate = "21 January 2025",
@@ -393,7 +390,7 @@ private fun PreviewTransactionDetailsCompletedCard(
         )
 
         TransactionDetailsCard(
-            item = transactionDetailsCardData
+            item = transactionDetailsCardUi
         )
     }
 }
@@ -404,7 +401,7 @@ private fun PreviewTransactionDetailsFailedCard(
     @PreviewParameter(TextLengthPreviewProvider::class) text: String
 ) {
     PreviewTheme {
-        val transactionDetailsCardData = TransactionDetailsCardData(
+        val transactionDetailsCardUi = TransactionDetailsCardUi(
             transactionTypeLabel = "Data sharing",
             relyingPartyName = "RP name $text",
             transactionDate = "21 January 2025",
@@ -414,7 +411,7 @@ private fun PreviewTransactionDetailsFailedCard(
         )
 
         TransactionDetailsCard(
-            item = transactionDetailsCardData
+            item = transactionDetailsCardUi
         )
     }
 }
@@ -423,42 +420,42 @@ private fun PreviewTransactionDetailsFailedCard(
 @Composable
 private fun ContentPreview() {
     val items = listOf(
-        ExpandableListItem.NestedListItemData(
-            header = ListItemData(
+        ExpandableListItemUi.NestedListItem(
+            header = ListItemDataUi(
                 itemId = "0",
-                mainContentData = ListItemMainContentData.Text(text = "Digital ID"),
+                mainContentData = ListItemMainContentDataUi.Text(text = "Digital ID"),
                 supportingText = "View Details",
-                trailingContentData = ListItemTrailingContentData.Icon(
+                trailingContentData = ListItemTrailingContentDataUi.Icon(
                     iconData = AppIcons.KeyboardArrowDown
                 ),
             ),
             nestedItems = listOf(
-                ExpandableListItem.SingleListItemData(
-                    ListItemData(
+                ExpandableListItemUi.SingleListItem(
+                    ListItemDataUi(
                         itemId = "1",
                         overlineText = "Family name",
-                        mainContentData = ListItemMainContentData.Text(text = "Doe"),
+                        mainContentData = ListItemMainContentDataUi.Text(text = "Doe"),
                     )
                 ),
-                ExpandableListItem.SingleListItemData(
-                    ListItemData(
+                ExpandableListItemUi.SingleListItem(
+                    ListItemDataUi(
                         itemId = "2",
                         overlineText = "Given name",
-                        mainContentData = ListItemMainContentData.Text(text = "John"),
+                        mainContentData = ListItemMainContentDataUi.Text(text = "John"),
                     )
                 )
             ),
             isExpanded = true
         )
     )
-    val mockedDataSharedList = TransactionDetailsDataSharedHolder(dataSharedItems = items)
-    val mockedDataSignedList = TransactionDetailsDataSignedHolder(dataSignedItems = items)
+    val mockedDataSharedList = TransactionDetailsDataSharedHolderUi(dataSharedItems = items)
+    val mockedDataSignedList = TransactionDetailsDataSignedHolderUi(dataSignedItems = items)
 
     val state = State(
         title = stringResource(R.string.transaction_details_screen_title),
         transactionDetailsUi = TransactionDetailsUi(
             transactionId = "id",
-            transactionDetailsCardData = TransactionDetailsCardData(
+            transactionDetailsCardUi = TransactionDetailsCardUi(
                 transactionTypeLabel = "Presentation",
                 transactionDate = "21 January 2025",
                 relyingPartyName = "Verisign",

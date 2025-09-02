@@ -24,6 +24,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -45,7 +48,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.zIndex
 import eu.europa.ec.uilogic.component.AppIcons
-import eu.europa.ec.uilogic.component.IconData
+import eu.europa.ec.uilogic.component.IconDataUi
 import eu.europa.ec.uilogic.component.SystemBroadcastReceiver
 import eu.europa.ec.uilogic.component.loader.LoadingIndicator
 import eu.europa.ec.uilogic.component.preview.PreviewTheme
@@ -58,8 +61,8 @@ import eu.europa.ec.uilogic.component.utils.stickyBottomPaddings
 import eu.europa.ec.uilogic.component.wrap.WrapIcon
 import eu.europa.ec.uilogic.component.wrap.WrapIconButton
 
-data class ToolbarAction(
-    val icon: IconData,
+data class ToolbarActionUi(
+    val icon: IconDataUi,
     val order: Int = 100,
     val enabled: Boolean = true,
     val customTint: Color? = null,
@@ -70,7 +73,7 @@ data class ToolbarAction(
 
 data class ToolbarConfig(
     val title: String = "",
-    val actions: List<ToolbarAction> = listOf()
+    val actions: List<ToolbarActionUi> = listOf()
 )
 
 enum class ScreenNavigateAction {
@@ -105,8 +108,15 @@ fun ContentScreen(
 
     Scaffold(
         topBar = {
-            if (topBar != null && contentErrorConfig == null) topBar.invoke()
-            else if (hasToolBar) {
+            if (topBar != null && contentErrorConfig == null) {
+                Box(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .statusBarsPadding()
+                ) {
+                    topBar()
+                }
+            } else if (hasToolBar) {
                 DefaultToolBar(
                     navigatableAction = contentErrorConfig?.let {
                         ScreenNavigateAction.CANCELABLE
@@ -117,11 +127,28 @@ fun ContentScreen(
                 )
             }
         },
-        bottomBar = bottomBar ?: {},
+        bottomBar = {
+            bottomBar?.let {
+                Box(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .navigationBarsPadding()
+                ) {
+                    bottomBar()
+                }
+            }
+        },
         floatingActionButton = fab,
         floatingActionButtonPosition = fabPosition,
         snackbarHost = snackbarHost,
     ) { padding ->
+
+        val screenPaddingsIgnoringSticky = remember(padding) {
+            screenPaddings(
+                hasStickyBottom = false,
+                append = padding
+            )
+        }
 
         Box(
             modifier = Modifier.fillMaxSize()
@@ -130,13 +157,19 @@ fun ContentScreen(
             if (contentErrorConfig != null) {
                 ContentError(
                     config = contentErrorConfig,
-                    paddingValues = screenPaddings(padding)
+                    paddingValues = screenPaddingsIgnoringSticky
                 )
             } else {
                 Column(modifier = Modifier.fillMaxSize()) {
 
                     Box(modifier = Modifier.weight(1f)) {
-                        bodyContent(screenPaddings(padding, topSpacing))
+                        bodyContent(
+                            screenPaddings(
+                                hasStickyBottom = stickyBottom != null,
+                                append = padding,
+                                topSpacing = topSpacing
+                            )
+                        )
                     }
 
                     stickyBottom?.let { stickyBottomContent ->
@@ -148,7 +181,7 @@ fun ContentScreen(
                         ) {
                             stickyBottomContent(
                                 stickyBottomPaddings(
-                                    contentScreenPaddings = screenPaddings(padding),
+                                    contentScreenPaddings = screenPaddingsIgnoringSticky,
                                     layoutDirection = LocalLayoutDirection.current
                                 )
                             )
@@ -201,7 +234,7 @@ private fun DefaultToolBar(
                 }
 
                 ToolbarIcon(
-                    toolbarAction = ToolbarAction(
+                    toolbarAction = ToolbarActionUi(
                         icon = navigationIcon,
                         onClick = {
                             onBack?.invoke()
@@ -220,7 +253,7 @@ private fun DefaultToolBar(
 
 @Composable
 internal fun ToolBarActions(
-    toolBarActions: List<ToolbarAction>?
+    toolBarActions: List<ToolbarActionUi>?
 ) {
     toolBarActions?.let { actions ->
 
@@ -238,7 +271,7 @@ internal fun ToolBarActions(
         if (actions.size > MAX_TOOLBAR_ACTIONS) {
             Box {
                 ToolbarIcon(
-                    toolbarAction = ToolbarAction(
+                    toolbarAction = ToolbarActionUi(
                         icon = AppIcons.VerticalMore,
                         onClick = { dropDownMenuExpanded = !dropDownMenuExpanded },
                         enabled = true,
@@ -261,7 +294,7 @@ internal fun ToolBarActions(
 }
 
 @Composable
-private fun ToolbarIcon(toolbarAction: ToolbarAction) {
+private fun ToolbarIcon(toolbarAction: ToolbarActionUi) {
     val customIconTint = toolbarAction.customTint
         ?: MaterialTheme.colorScheme.onSurface
 
@@ -287,7 +320,7 @@ private fun ToolbarIcon(toolbarAction: ToolbarAction) {
 @Composable
 private fun ToolbarIconClickablePreview() {
     PreviewTheme {
-        val action = ToolbarAction(
+        val action = ToolbarActionUi(
             icon = AppIcons.Verified,
             onClick = {},
             enabled = true,
@@ -302,7 +335,7 @@ private fun ToolbarIconClickablePreview() {
 @Composable
 private fun ToolbarIconNotClickablePreview() {
     PreviewTheme {
-        val action = ToolbarAction(
+        val action = ToolbarActionUi(
             icon = AppIcons.Verified,
             onClick = {},
             enabled = true,
@@ -318,25 +351,25 @@ private fun ToolbarIconNotClickablePreview() {
 private fun ToolBarActionsWithFourActionsPreview() {
     PreviewTheme {
         val toolBarActions = listOf(
-            ToolbarAction(
+            ToolbarActionUi(
                 icon = AppIcons.Verified,
                 onClick = {},
                 enabled = true,
                 clickable = true,
             ),
-            ToolbarAction(
+            ToolbarActionUi(
                 icon = AppIcons.Verified,
                 onClick = {},
                 enabled = false,
                 clickable = true,
             ),
-            ToolbarAction(
+            ToolbarActionUi(
                 icon = AppIcons.Verified,
                 onClick = {},
                 enabled = true,
                 clickable = false,
             ),
-            ToolbarAction(
+            ToolbarActionUi(
                 icon = AppIcons.Verified,
                 onClick = {},
                 enabled = false,

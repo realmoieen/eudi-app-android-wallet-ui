@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2025 European Commission
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
  * Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
@@ -29,7 +29,7 @@ import eu.europa.ec.presentationfeature.interactor.PresentationRequestInteractor
 import eu.europa.ec.presentationfeature.interactor.PresentationRequestInteractorPartialState
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
-import eu.europa.ec.uilogic.component.RelyingPartyData
+import eu.europa.ec.uilogic.component.RelyingPartyDataUi
 import eu.europa.ec.uilogic.component.content.ContentErrorConfig
 import eu.europa.ec.uilogic.component.content.ContentHeaderConfig
 import eu.europa.ec.uilogic.config.ConfigNavigation
@@ -187,8 +187,8 @@ class PresentationRequestViewModel(
     private fun getRelyingPartyData(
         name: String?,
         isVerified: Boolean,
-    ): RelyingPartyData {
-        return RelyingPartyData(
+    ): RelyingPartyDataUi {
+        return RelyingPartyDataUi(
             isVerified = isVerified,
             name = name.ifEmptyOrNull(
                 default = resourceProvider.getString(R.string.request_relying_party_default_name)

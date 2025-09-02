@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2025 European Commission
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
  * Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
@@ -19,11 +19,11 @@ package eu.europa.ec.dashboardfeature.ui.documents.list
 import androidx.lifecycle.viewModelScope
 import eu.europa.ec.businesslogic.validator.model.FilterableList
 import eu.europa.ec.businesslogic.validator.model.SortOrder
-import eu.europa.ec.commonfeature.config.IssuanceFlowUiConfig
+import eu.europa.ec.commonfeature.config.IssuanceFlowType
+import eu.europa.ec.commonfeature.config.IssuanceUiConfig
 import eu.europa.ec.commonfeature.config.QrScanFlow
 import eu.europa.ec.commonfeature.config.QrScanUiConfig
-import eu.europa.ec.commonfeature.model.DocumentUiIssuanceState
-import eu.europa.ec.corelogic.model.DeferredDocumentData
+import eu.europa.ec.corelogic.model.DeferredDocumentDataDomain
 import eu.europa.ec.corelogic.model.DocumentCategory
 import eu.europa.ec.corelogic.model.FormatType
 import eu.europa.ec.dashboardfeature.interactor.DocumentInteractorDeleteDocumentPartialState
@@ -31,20 +31,21 @@ import eu.europa.ec.dashboardfeature.interactor.DocumentInteractorFilterPartialS
 import eu.europa.ec.dashboardfeature.interactor.DocumentInteractorGetDocumentsPartialState
 import eu.europa.ec.dashboardfeature.interactor.DocumentInteractorRetryIssuingDeferredDocumentsPartialState
 import eu.europa.ec.dashboardfeature.interactor.DocumentsInteractor
-import eu.europa.ec.dashboardfeature.model.DocumentUi
+import eu.europa.ec.dashboardfeature.ui.documents.detail.model.DocumentIssuanceStateUi
 import eu.europa.ec.dashboardfeature.ui.documents.list.DocumentsBottomSheetContent.DeferredDocumentPressed
 import eu.europa.ec.dashboardfeature.ui.documents.list.DocumentsBottomSheetContent.Filters
+import eu.europa.ec.dashboardfeature.ui.documents.list.model.DocumentUi
 import eu.europa.ec.eudi.wallet.document.DocumentId
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
 import eu.europa.ec.resourceslogic.theme.values.ThemeColors
 import eu.europa.ec.uilogic.component.AppIcons
 import eu.europa.ec.uilogic.component.DualSelectorButton
-import eu.europa.ec.uilogic.component.DualSelectorButtonData
-import eu.europa.ec.uilogic.component.ListItemTrailingContentData
+import eu.europa.ec.uilogic.component.DualSelectorButtonDataUi
+import eu.europa.ec.uilogic.component.ListItemTrailingContentDataUi
 import eu.europa.ec.uilogic.component.ModalOptionUi
 import eu.europa.ec.uilogic.component.content.ContentErrorConfig
-import eu.europa.ec.uilogic.component.wrap.ExpandableListItem
+import eu.europa.ec.uilogic.component.wrap.ExpandableListItemUi
 import eu.europa.ec.uilogic.mvi.MviViewModel
 import eu.europa.ec.uilogic.mvi.ViewEvent
 import eu.europa.ec.uilogic.mvi.ViewSideEffect
@@ -75,8 +76,8 @@ data class State(
     val isFromOnPause: Boolean = true,
     val shouldRevertFilterChanges: Boolean = true,
 
-    val filtersUi: List<ExpandableListItem.NestedListItemData> = emptyList(),
-    val sortOrder: DualSelectorButtonData,
+    val filtersUi: List<ExpandableListItemUi.NestedListItem> = emptyList(),
+    val sortOrder: DualSelectorButtonDataUi,
     val isFilteringActive: Boolean,
 ) : ViewState
 
@@ -147,13 +148,13 @@ sealed class Effect : ViewSideEffect {
 }
 
 sealed class DocumentsBottomSheetContent {
-    data class Filters(val filters: List<ExpandableListItem.SingleListItemData>) :
+    data class Filters(val filters: List<ExpandableListItemUi.SingleListItem>) :
         DocumentsBottomSheetContent()
 
     data object AddDocument : DocumentsBottomSheetContent()
     data class DeferredDocumentPressed(val documentId: DocumentId) : DocumentsBottomSheetContent()
     data class DeferredDocumentsReady(
-        val successfullyIssuedDeferredDocuments: List<DeferredDocumentData>,
+        val successfullyIssuedDeferredDocuments: List<DeferredDocumentDataDomain>,
         val options: List<ModalOptionUi<Event>>,
     ) : DocumentsBottomSheetContent()
 }
@@ -171,7 +172,7 @@ class DocumentsViewModel(
     override fun setInitialState(): State {
         return State(
             isLoading = true,
-            sortOrder = DualSelectorButtonData(
+            sortOrder = DualSelectorButtonDataUi(
                 first = resourceProvider.getString(R.string.documents_screen_filters_ascending),
                 second = resourceProvider.getString(R.string.documents_screen_filters_descending),
                 selectedButton = DualSelectorButton.FIRST,
@@ -344,7 +345,7 @@ class DocumentsViewModel(
                             val deferredDocs: MutableMap<DocumentId, FormatType> = mutableMapOf()
                             response.allDocuments.items.filter { document ->
                                 with(document.payload as DocumentUi) {
-                                    documentIssuanceState == DocumentUiIssuanceState.Pending
+                                    documentIssuanceState == DocumentIssuanceStateUi.Pending
                                 }
                             }.forEach { documentItem ->
                                 with(documentItem.payload as DocumentUi) {
@@ -389,10 +390,10 @@ class DocumentsViewModel(
             val data = filterableItem.payload as DocumentUi
             val failedUiItem = if (data.uiData.itemId in deferredFailedDocIds) {
                 data.copy(
-                    documentIssuanceState = DocumentUiIssuanceState.Failed,
+                    documentIssuanceState = DocumentIssuanceStateUi.Failed,
                     uiData = data.uiData.copy(
                         supportingText = resourceProvider.getString(R.string.dashboard_document_deferred_failed),
-                        trailingContentData = ListItemTrailingContentData.Icon(
+                        trailingContentData = ListItemTrailingContentDataUi.Icon(
                             iconData = AppIcons.ErrorFilled,
                             tint = ThemeColors.error
                         )
@@ -470,7 +471,7 @@ class DocumentsViewModel(
         }
     }
 
-    private fun getBottomSheetOptions(deferredDocumentsData: List<DeferredDocumentData>): List<ModalOptionUi<Event>> {
+    private fun getBottomSheetOptions(deferredDocumentsData: List<DeferredDocumentDataDomain>): List<ModalOptionUi<Event>> {
         return deferredDocumentsData.map {
             ModalOptionUi(
                 title = it.docName,
@@ -547,7 +548,6 @@ class DocumentsViewModel(
                     screen = DashboardScreens.DocumentDetails,
                     arguments = generateComposableArguments(
                         mapOf(
-                            "detailsType" to IssuanceFlowUiConfig.EXTRA_DOCUMENT,
                             "documentId" to docId
                         )
                     )
@@ -557,14 +557,24 @@ class DocumentsViewModel(
     }
 
     private fun goToAddDocument() {
-        setEffect {
-            Effect.Navigation.SwitchScreen(
-                screenRoute = generateComposableNavigationLink(
-                    screen = IssuanceScreens.AddDocument,
-                    arguments = generateComposableArguments(
-                        mapOf("flowType" to IssuanceFlowUiConfig.EXTRA_DOCUMENT)
+        val addDocumentScreenRoute = generateComposableNavigationLink(
+            screen = IssuanceScreens.AddDocument,
+            arguments = generateComposableArguments(
+                mapOf(
+                    IssuanceUiConfig.serializedKeyName to uiSerializer.toBase64(
+                        model = IssuanceUiConfig(
+                            flowType = IssuanceFlowType.ExtraDocument(
+                                formatType = null
+                            )
+                        ),
+                        parser = IssuanceUiConfig.Parser
                     )
                 )
+            )
+        )
+        setEffect {
+            Effect.Navigation.SwitchScreen(
+                screenRoute = addDocumentScreenRoute
             )
         }
     }
@@ -580,7 +590,11 @@ class DocumentsViewModel(
                                 QrScanUiConfig(
                                     title = resourceProvider.getString(R.string.issuance_qr_scan_title),
                                     subTitle = resourceProvider.getString(R.string.issuance_qr_scan_subtitle),
-                                    qrScanFlow = QrScanFlow.Issuance(IssuanceFlowUiConfig.EXTRA_DOCUMENT)
+                                    qrScanFlow = QrScanFlow.Issuance(
+                                        issuanceFlowType = IssuanceFlowType.ExtraDocument(
+                                            formatType = null
+                                        )
+                                    )
                                 ),
                                 QrScanUiConfig.Parser
                             )

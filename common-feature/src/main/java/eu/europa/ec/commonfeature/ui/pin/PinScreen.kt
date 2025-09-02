@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2025 European Commission
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
  * Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
@@ -43,13 +43,13 @@ import androidx.navigation.NavController
 import eu.europa.ec.commonfeature.model.PinFlow
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.uilogic.component.AppIconAndText
-import eu.europa.ec.uilogic.component.AppIconAndTextData
+import eu.europa.ec.uilogic.component.AppIconAndTextDataUi
 import eu.europa.ec.uilogic.component.content.ContentScreen
 import eu.europa.ec.uilogic.component.preview.PreviewTheme
 import eu.europa.ec.uilogic.component.preview.ThemeModePreviews
 import eu.europa.ec.uilogic.component.utils.SPACING_LARGE
 import eu.europa.ec.uilogic.component.utils.SPACING_SMALL
-import eu.europa.ec.uilogic.component.wrap.BottomSheetTextData
+import eu.europa.ec.uilogic.component.wrap.BottomSheetTextDataUi
 import eu.europa.ec.uilogic.component.wrap.ButtonConfig
 import eu.europa.ec.uilogic.component.wrap.ButtonType
 import eu.europa.ec.uilogic.component.wrap.DialogBottomSheet
@@ -89,7 +89,7 @@ fun PinScreen(
         onBack = { viewModel.setEvent(state.onBackEvent) },
         stickyBottom = { paddingValues ->
             WrapStickyBottomContent(
-                stickyBottomModifier = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(paddingValues),
                 stickyBottomConfig = StickyBottomConfig(
@@ -186,7 +186,7 @@ private fun Content(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = SPACING_LARGE.dp),
-            appIconAndTextData = AppIconAndTextData(),
+            appIconAndTextData = AppIconAndTextDataUi(),
         )
 
         Column(
@@ -253,7 +253,7 @@ private fun SheetContent(
     onEventSent: (event: Event) -> Unit
 ) {
     DialogBottomSheet(
-        textData = BottomSheetTextData(
+        textData = BottomSheetTextDataUi(
             title = stringResource(id = R.string.quick_pin_bottom_sheet_cancel_title),
             message = stringResource(id = R.string.quick_pin_bottom_sheet_cancel_subtitle),
             positiveButtonText = stringResource(id = R.string.quick_pin_bottom_sheet_cancel_primary_button_text),

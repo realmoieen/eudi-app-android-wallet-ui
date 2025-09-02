@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2025 European Commission
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
  * Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
@@ -17,7 +17,8 @@
 package eu.europa.ec.issuancefeature.interactor
 
 import eu.europa.ec.businesslogic.extension.safeAsync
-import eu.europa.ec.commonfeature.extensions.toExpandableListItems
+import eu.europa.ec.businesslogic.provider.UuidProvider
+import eu.europa.ec.commonfeature.extension.toExpandableListItems
 import eu.europa.ec.commonfeature.util.transformPathsToDomainClaims
 import eu.europa.ec.corelogic.controller.WalletCoreDocumentsController
 import eu.europa.ec.corelogic.extension.localizedIssuerMetadata
@@ -27,19 +28,19 @@ import eu.europa.ec.eudi.wallet.document.IssuedDocument
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
 import eu.europa.ec.uilogic.component.AppIcons
-import eu.europa.ec.uilogic.component.ListItemData
-import eu.europa.ec.uilogic.component.ListItemMainContentData
-import eu.europa.ec.uilogic.component.ListItemTrailingContentData
-import eu.europa.ec.uilogic.component.RelyingPartyData
+import eu.europa.ec.uilogic.component.ListItemDataUi
+import eu.europa.ec.uilogic.component.ListItemMainContentDataUi
+import eu.europa.ec.uilogic.component.ListItemTrailingContentDataUi
+import eu.europa.ec.uilogic.component.RelyingPartyDataUi
 import eu.europa.ec.uilogic.component.content.ContentHeaderConfig
-import eu.europa.ec.uilogic.component.wrap.ExpandableListItem
+import eu.europa.ec.uilogic.component.wrap.ExpandableListItemUi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.net.URI
 
 sealed class DocumentIssuanceSuccessInteractorGetUiItemsPartialState {
     data class Success(
-        val documentsUi: List<ExpandableListItem.NestedListItemData>,
+        val documentsUi: List<ExpandableListItemUi.NestedListItem>,
         val headerConfig: ContentHeaderConfig,
     ) : DocumentIssuanceSuccessInteractorGetUiItemsPartialState()
 
@@ -55,6 +56,7 @@ interface DocumentIssuanceSuccessInteractor {
 class DocumentIssuanceSuccessInteractorImpl(
     private val walletCoreDocumentsController: WalletCoreDocumentsController,
     private val resourceProvider: ResourceProvider,
+    private val uuidProvider: UuidProvider
 ) : DocumentIssuanceSuccessInteractor {
 
     private val genericErrorMsg
@@ -63,7 +65,7 @@ class DocumentIssuanceSuccessInteractorImpl(
     override fun getUiItems(documentIds: List<DocumentId>): Flow<DocumentIssuanceSuccessInteractorGetUiItemsPartialState> {
         return flow {
 
-            val documentsUi = mutableListOf<ExpandableListItem.NestedListItemData>()
+            val documentsUi = mutableListOf<ExpandableListItemUi.NestedListItem>()
 
             var issuerName =
                 resourceProvider.getString(R.string.issuance_success_header_issuer_default_name)
@@ -95,18 +97,19 @@ class DocumentIssuanceSuccessInteractorImpl(
                         paths = claimsPaths,
                         claims = document.data.claims,
                         resourceProvider = resourceProvider,
+                        uuidProvider = uuidProvider
                     )
 
                     val claimsUi = domainClaims.map { selectedDomainClaim ->
                         selectedDomainClaim.toExpandableListItems(docId = documentId)
                     }
 
-                    val documentUi = ExpandableListItem.NestedListItemData(
-                        header = ListItemData(
+                    val documentUi = ExpandableListItemUi.NestedListItem(
+                        header = ListItemDataUi(
                             itemId = documentId,
-                            mainContentData = ListItemMainContentData.Text(text = document.name),
+                            mainContentData = ListItemMainContentDataUi.Text(text = document.name),
                             supportingText = resourceProvider.getString(R.string.document_success_collapsed_supporting_text),
-                            trailingContentData = ListItemTrailingContentData.Icon(
+                            trailingContentData = ListItemTrailingContentDataUi.Icon(
                                 iconData = AppIcons.KeyboardArrowDown
                             )
                         ),
@@ -126,7 +129,7 @@ class DocumentIssuanceSuccessInteractorImpl(
             }
             val headerConfig = ContentHeaderConfig(
                 description = headerConfigDescription,
-                relyingPartyData = RelyingPartyData(
+                relyingPartyData = RelyingPartyDataUi(
                     logo = issuerLogo,
                     name = issuerName,
                     isVerified = issuerIsTrusted,

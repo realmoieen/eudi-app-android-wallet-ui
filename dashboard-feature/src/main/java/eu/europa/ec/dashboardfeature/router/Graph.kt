@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2025 European Commission
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
  * Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
@@ -25,12 +25,12 @@ import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import eu.europa.ec.dashboardfeature.BuildConfig
 import eu.europa.ec.dashboardfeature.ui.dashboard.DashboardScreen
+import eu.europa.ec.dashboardfeature.ui.document_sign.DocumentSignScreen
 import eu.europa.ec.dashboardfeature.ui.documents.detail.DocumentDetailsScreen
-import eu.europa.ec.dashboardfeature.ui.sign.DocumentSignScreen
+import eu.europa.ec.dashboardfeature.ui.settings.SettingsScreen
 import eu.europa.ec.dashboardfeature.ui.transactions.detail.TransactionDetailsScreen
 import eu.europa.ec.uilogic.navigation.DashboardScreens
 import eu.europa.ec.uilogic.navigation.ModuleRoute
-import org.koin.androidx.compose.getViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -58,7 +58,22 @@ fun NavGraphBuilder.featureDashboardGraph(navController: NavController) {
         }
 
         composable(
-            route = DashboardScreens.SignDocument.screenRoute
+            route = DashboardScreens.Settings.screenRoute,
+            deepLinks = listOf(
+                navDeepLink {
+                    uriPattern =
+                        BuildConfig.DEEPLINK + DashboardScreens.Settings.screenRoute
+                }
+            ),
+        ) {
+            SettingsScreen(
+                navController = navController,
+                viewModel = koinViewModel()
+            )
+        }
+
+        composable(
+            route = DashboardScreens.DocumentSign.screenRoute
         ) {
             DocumentSignScreen(navController, koinViewModel())
         }
@@ -79,7 +94,7 @@ fun NavGraphBuilder.featureDashboardGraph(navController: NavController) {
         ) {
             DocumentDetailsScreen(
                 navController,
-                getViewModel(
+                koinViewModel(
                     parameters = {
                         parametersOf(
                             it.arguments?.getString("documentId").orEmpty(),
@@ -105,7 +120,7 @@ fun NavGraphBuilder.featureDashboardGraph(navController: NavController) {
         ) {
             TransactionDetailsScreen(
                 navController,
-                getViewModel(
+                koinViewModel(
                     parameters = {
                         parametersOf(
                             it.arguments?.getString("transactionId").orEmpty(),

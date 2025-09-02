@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2025 European Commission
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
  * Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
@@ -34,7 +34,7 @@ import eu.europa.ec.corelogic.extension.getName
 import eu.europa.ec.corelogic.model.DocumentIdentifier
 import eu.europa.ec.eudi.openid4vci.TxCodeInputMode
 import eu.europa.ec.eudi.wallet.document.DocumentId
-import eu.europa.ec.issuancefeature.ui.offer.model.DocumentOfferItemUi
+import eu.europa.ec.issuancefeature.ui.offer.model.DocumentOfferUi
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
 import eu.europa.ec.resourceslogic.theme.values.ThemeColors
@@ -52,7 +52,7 @@ import java.net.URI
 
 sealed class ResolveDocumentOfferInteractorPartialState {
     data class Success(
-        val documents: List<DocumentOfferItemUi>,
+        val documents: List<DocumentOfferUi>,
         val issuerName: String,
         val issuerLogo: URI?,
         val txCodeLength: Int?
@@ -158,16 +158,14 @@ class DocumentOfferInteractorImpl(
                             val hasPidInOffer =
                                 response.offer.offeredDocuments.any { offeredDocument ->
                                     val id = offeredDocument.documentIdentifier
-                                    // TODO: Re-activate once SD-JWT PID Rule book is in place in ARF.
-                                    // id == DocumentIdentifier.MdocPid || id == DocumentIdentifier.SdJwtPid
-                                    id == DocumentIdentifier.MdocPid
+                                    id == DocumentIdentifier.MdocPid || id == DocumentIdentifier.SdJwtPid
                                 }
 
                             if (hasMainPid || hasPidInOffer) {
 
                                 ResolveDocumentOfferInteractorPartialState.Success(
                                     documents = response.offer.offeredDocuments.map { offeredDocument ->
-                                        DocumentOfferItemUi(
+                                        DocumentOfferUi(
                                             title = offeredDocument.getName(userLocale).orEmpty(),
                                         )
                                     },

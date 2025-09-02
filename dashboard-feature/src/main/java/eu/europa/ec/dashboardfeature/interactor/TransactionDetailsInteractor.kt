@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2025 European Commission
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
  * Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
@@ -17,23 +17,24 @@
 package eu.europa.ec.dashboardfeature.interactor
 
 import eu.europa.ec.businesslogic.extension.safeAsync
+import eu.europa.ec.businesslogic.provider.UuidProvider
 import eu.europa.ec.businesslogic.util.FULL_DATETIME_PATTERN
 import eu.europa.ec.businesslogic.util.formatLocalDateTime
-import eu.europa.ec.commonfeature.extensions.toExpandableListItems
-import eu.europa.ec.commonfeature.model.TransactionUiStatus
-import eu.europa.ec.commonfeature.model.TransactionUiStatus.Companion.toUiText
-import eu.europa.ec.commonfeature.model.toTransactionUiStatus
+import eu.europa.ec.commonfeature.extension.toExpandableListItems
 import eu.europa.ec.commonfeature.util.createKeyValue
 import eu.europa.ec.corelogic.controller.WalletCoreDocumentsController
 import eu.europa.ec.corelogic.extension.getLocalizedDocumentName
 import eu.europa.ec.corelogic.extension.sortRecursivelyBy
-import eu.europa.ec.corelogic.model.ClaimPath.Companion.toClaimPath
-import eu.europa.ec.corelogic.model.DomainClaim
-import eu.europa.ec.corelogic.model.TransactionLogData
-import eu.europa.ec.corelogic.model.TransactionLogData.Companion.getTransactionTypeLabel
-import eu.europa.ec.dashboardfeature.model.TransactionDetailsCardData
-import eu.europa.ec.dashboardfeature.model.TransactionDetailsDataSharedHolder
-import eu.europa.ec.dashboardfeature.model.TransactionDetailsUi
+import eu.europa.ec.corelogic.model.ClaimDomain
+import eu.europa.ec.corelogic.model.ClaimPathDomain.Companion.toClaimPathDomain
+import eu.europa.ec.corelogic.model.TransactionLogDataDomain
+import eu.europa.ec.corelogic.model.TransactionLogDataDomain.Companion.getTransactionTypeLabel
+import eu.europa.ec.dashboardfeature.ui.transactions.detail.model.TransactionDetailsCardUi
+import eu.europa.ec.dashboardfeature.ui.transactions.detail.model.TransactionDetailsDataSharedHolderUi
+import eu.europa.ec.dashboardfeature.ui.transactions.detail.model.TransactionDetailsUi
+import eu.europa.ec.dashboardfeature.ui.transactions.model.TransactionStatusUi
+import eu.europa.ec.dashboardfeature.ui.transactions.model.TransactionStatusUi.Companion.toUiText
+import eu.europa.ec.dashboardfeature.ui.transactions.model.toTransactionStatusUi
 import eu.europa.ec.eudi.wallet.document.format.MsoMdocFormat
 import eu.europa.ec.eudi.wallet.document.format.SdJwtVcFormat
 import eu.europa.ec.eudi.wallet.transactionLogging.TransactionLog
@@ -41,10 +42,10 @@ import eu.europa.ec.eudi.wallet.transactionLogging.presentation.PresentedDocumen
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
 import eu.europa.ec.uilogic.component.AppIcons
-import eu.europa.ec.uilogic.component.ListItemData
-import eu.europa.ec.uilogic.component.ListItemMainContentData
-import eu.europa.ec.uilogic.component.ListItemTrailingContentData
-import eu.europa.ec.uilogic.component.wrap.ExpandableListItem
+import eu.europa.ec.uilogic.component.ListItemDataUi
+import eu.europa.ec.uilogic.component.ListItemMainContentDataUi
+import eu.europa.ec.uilogic.component.ListItemTrailingContentDataUi
+import eu.europa.ec.uilogic.component.wrap.ExpandableListItemUi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -84,6 +85,7 @@ interface TransactionDetailsInteractor {
 class TransactionDetailsInteractorImpl(
     private val walletCoreDocumentsController: WalletCoreDocumentsController,
     private val resourceProvider: ResourceProvider,
+    private val uuidProvider: UuidProvider,
 ) : TransactionDetailsInteractor {
 
     private val genericErrorMsg
@@ -96,22 +98,22 @@ class TransactionDetailsInteractorImpl(
 
                     val userLocale = resourceProvider.getLocale()
 
-                    val transactionUiStatus = transaction.status.toTransactionUiStatus()
+                    val transactionUiStatus = transaction.status.toTransactionStatusUi()
                     val transactionUiDate = transaction.creationLocalDateTime.formatLocalDateTime(
                         pattern = FULL_DATETIME_PATTERN
                     )
 
                     val relyingPartyData: TransactionLog.RelyingParty?
-                    val dataShared: List<ExpandableListItem.NestedListItemData>?
+                    val dataShared: List<ExpandableListItemUi.NestedListItem>?
 
                     when (transaction) {
-                        is TransactionLogData.IssuanceLog -> {
+                        is TransactionLogDataDomain.IssuanceLog -> {
                             //TODO change this once Core supports more transaction types
                             relyingPartyData = null
                             dataShared = null
                         }
 
-                        is TransactionLogData.PresentationLog -> {
+                        is TransactionLogDataDomain.PresentationLog -> {
                             relyingPartyData = transaction.relyingParty
 
                             dataShared = transaction.documents.toGroupedNestedClaims(
@@ -119,10 +121,11 @@ class TransactionDetailsInteractorImpl(
                                 itemIdentifierPrefix = resourceProvider.getString(R.string.transaction_details_data_shared_prefix_id),
                                 userLocale = userLocale,
                                 resourceProvider = resourceProvider,
+                                uuidProvider = uuidProvider,
                             )
                         }
 
-                        is TransactionLogData.SigningLog -> {
+                        is TransactionLogDataDomain.SigningLog -> {
                             //TODO change this once Core supports more transaction types
                             relyingPartyData = null
                             dataShared = null
@@ -131,20 +134,20 @@ class TransactionDetailsInteractorImpl(
 
                     val transactionDetailsUi = TransactionDetailsUi(
                         transactionId = transactionId,
-                        transactionDetailsCardData = TransactionDetailsCardData(
+                        transactionDetailsCardUi = TransactionDetailsCardUi(
                             transactionTypeLabel = transaction.getTransactionTypeLabel(
                                 resourceProvider
                             ),
                             transactionStatusLabel = transactionUiStatus.toUiText(resourceProvider),
                             transactionIsCompleted = when (transactionUiStatus) {
-                                TransactionUiStatus.Completed -> true
-                                TransactionUiStatus.Failed -> false
+                                TransactionStatusUi.Completed -> true
+                                TransactionStatusUi.Failed -> false
                             },
                             transactionDate = transactionUiDate,
                             relyingPartyName = relyingPartyData?.name,
                             relyingPartyIsVerified = relyingPartyData?.isVerified
                         ),
-                        transactionDetailsDataShared = TransactionDetailsDataSharedHolder(
+                        transactionDetailsDataShared = TransactionDetailsDataSharedHolderUi(
                             dataSharedItems = dataShared ?: emptyList()
                         ),
                         transactionDetailsDataSigned = null //TODO change this once Core adds support for it
@@ -182,10 +185,11 @@ class TransactionDetailsInteractorImpl(
         documentSupportingText: String,
         itemIdentifierPrefix: String,
         userLocale: Locale,
-        resourceProvider: ResourceProvider
-    ): List<ExpandableListItem.NestedListItemData> {
+        resourceProvider: ResourceProvider,
+        uuidProvider: UuidProvider
+    ): List<ExpandableListItemUi.NestedListItem> {
         return this.mapIndexed { index, presentedDocument ->
-            val domainClaims: MutableList<DomainClaim> = mutableListOf()
+            val domainClaims: MutableList<ClaimDomain> = mutableListOf()
 
             presentedDocument.claims.forEach { presentedClaim ->
                 val elementIdentifier = when (presentedDocument.format) {
@@ -196,7 +200,7 @@ class TransactionDetailsInteractorImpl(
                 val itemPath = when (presentedDocument.format) {
                     is MsoMdocFormat -> listOf(elementIdentifier)
                     is SdJwtVcFormat -> presentedClaim.path
-                }.toClaimPath()
+                }.toClaimPathDomain()
 
                 createKeyValue(
                     item = presentedClaim.value!!,
@@ -205,15 +209,16 @@ class TransactionDetailsInteractorImpl(
                     resourceProvider = resourceProvider,
                     claimMetaData = presentedClaim.metadata,
                     allItems = domainClaims,
+                    uuidProvider = uuidProvider
                 )
             }
 
             val uniqueId = itemIdentifierPrefix + index
 
-            ExpandableListItem.NestedListItemData(
-                header = ListItemData(
+            ExpandableListItemUi.NestedListItem(
+                header = ListItemDataUi(
                     itemId = uniqueId,
-                    mainContentData = ListItemMainContentData.Text(
+                    mainContentData = ListItemMainContentDataUi.Text(
                         text = presentedDocument.metadata.getLocalizedDocumentName(
                             userLocale = userLocale,
                             fallback = presentedDocument.metadata?.display?.firstOrNull()?.name
@@ -224,7 +229,7 @@ class TransactionDetailsInteractorImpl(
                         )
                     ),
                     supportingText = documentSupportingText,
-                    trailingContentData = ListItemTrailingContentData.Icon(
+                    trailingContentData = ListItemTrailingContentDataUi.Icon(
                         iconData = AppIcons.KeyboardArrowDown
                     )
                 ),

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 European Commission
+ * Copyright (c) 2025 European Commission
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
  * Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
@@ -19,7 +19,6 @@ package eu.europa.ec.businesslogic.controller.storage
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import androidx.core.content.edit
-import eu.europa.ec.businesslogic.extension.decodeFromPemBase64String
 import eu.europa.ec.businesslogic.extension.shuffle
 import eu.europa.ec.businesslogic.extension.unShuffle
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
@@ -308,57 +307,35 @@ class PrefsControllerImpl(
 }
 
 interface PrefKeys {
-    fun getBiometricAlias(): String
-    fun setBiometricAlias(value: String)
-    fun getStorageKey(): ByteArray?
-    fun setStorageKey(key: String)
+    fun getCryptoAlias(): String
+    fun setCryptoAlias(value: String)
 }
 
 class PrefKeysImpl(
     private val prefsController: PrefsController
 ) : PrefKeys {
 
-    /**
-     * Returns the biometric alias in order to find the biometric secret key in android keystore.
-     */
-    override fun getBiometricAlias(): String {
-        return prefsController.getString("BiometricAlias", "")
-    }
 
     /**
-     * Stores the biometric alias used for the secret key in android keystore.
+     * Retrieves the alias used for cryptographic operations from SharedPreferences.
+     * This alias is typically used to identify a specific key or set of keys
+     * stored in the Android Keystore system.
      *
-     * @param value the biometric alias value.
+     * @return The crypto alias string. Returns an empty string if the alias is not found
+     *         or has not been set.
      */
-    override fun setBiometricAlias(value: String) {
-        prefsController.setString("BiometricAlias", value)
+    override fun getCryptoAlias(): String {
+        return prefsController.getString("CryptoAlias", "")
     }
 
-    /**
-     * Sets the storage key used for persisting data.
-     *
-     * This function updates the stored storage key in the preferences controller.
-     * Subsequent data persistence operations will use this new key.
-     *
-     * @param key The new storage key to be used.
-     */
-    override fun setStorageKey(key: String) {
-        prefsController.setString("StorageKey", key)
-    }
 
     /**
-     * Retrieves the storage key from persistent storage.
+     * Stores the crypto alias used for the secret key in android keystore.
+     * This is used for cryptographic operations not related to biometrics.
      *
-     * The storage key is used for encrypting and decrypting data that needs to be
-     * persistently stored. It is retrieved from the `prefsController` using the
-     * key "StorageKey". If a non-empty key is found, it is assumed to be a PEM-encoded
-     * base64 string and is decoded into a byte array. If no key is found or the retrieved
-     * key is empty, `null` is returned.
-     *
-     * @return The storage key as a byte array, or `null` if no key is found or the key is empty.
+     * @param value the crypto alias value.
      */
-    override fun getStorageKey(): ByteArray? {
-        val key = prefsController.getString("StorageKey", "")
-        return if (key.isNotEmpty()) key.decodeFromPemBase64String() else null
+    override fun setCryptoAlias(value: String) {
+        prefsController.setString("CryptoAlias", value)
     }
 }
