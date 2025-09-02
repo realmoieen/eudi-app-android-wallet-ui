@@ -31,7 +31,7 @@ internal class WalletCoreConfigImpl(
 ) : WalletCoreConfig {
 
     private companion object {
-        const val VCI_ISSUER_URL = "https://issuer.eudiw.dev"
+        const val VCI_ISSUER_URL = "https://issuer.ascertia.net/adss/vc/oid4vci/AscertiaPIDIssuer"
         const val VCI_CLIENT_ID = "wallet-dev"
         const val AUTHENTICATION_REQUIRED = false
     }
@@ -57,7 +57,7 @@ internal class WalletCoreConfigImpl(
                         )
 
                         withClientIdSchemes(
-                            listOf(ClientIdScheme.X509SanDns)
+                            listOf(ClientIdScheme.X509SanDns,ClientIdScheme.X509SanUri)
                         )
                         withSchemes(
                             listOf(
@@ -81,6 +81,7 @@ internal class WalletCoreConfigImpl(
 
                     configureReaderTrustStore(
                         context,
+                        R.raw.ascertia_root_iaca,
                         R.raw.pidissuerca02_cz,
                         R.raw.pidissuerca02_ee,
                         R.raw.pidissuerca02_eu,
