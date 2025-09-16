@@ -75,7 +75,7 @@ internal class WalletCoreConfigImpl(
                         withIssuerUrl(issuerUrl = VCI_ISSUER_URL)
                         withClientId(clientId = VCI_CLIENT_ID)
                         withAuthFlowRedirectionURI(BuildConfig.ISSUE_AUTHORIZATION_DEEPLINK)
-                        withParUsage(OpenId4VciManager.Config.ParUsage.IF_SUPPORTED)
+                        withParUsage(OpenId4VciManager.Config.ParUsage.NEVER)
                         withUseDPoPIfSupported(true)
                     }
 
